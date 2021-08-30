@@ -20,9 +20,9 @@ def counsel():
     message = counsellor.split_msg(message)
 
     emotion = counsellor.classify_msg(message)
-    words = counsellor.tokenize_msg(message)
+    #words = counsellor.tokenize_msg(message)
 
-    return emotion, words
+    return emotion
 
 
 if __name__ == '__main__':

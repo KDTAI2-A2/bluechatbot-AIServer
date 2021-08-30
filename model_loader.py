@@ -1,5 +1,5 @@
 from pykospacing import Spacing
-from hanspell import spell_checker
+#from hanspell import spell_checker
 
 from konlpy.tag import Mecab
 
@@ -9,23 +9,26 @@ import torch.nn as nn
 from model.kobert import KoBERTforSequenceClassification
 from kobert_transformers import get_tokenizer
 
-from sklearn.externals import joblib
+import joblib
 
 
 class model_loader():
     def __init__(self):
+        ctx = "cuda" if torch.cuda.is_available() else "cpu"
+        device = torch.device(ctx)
+
         self.spacing = Spacing()
         
         # Mecab
         self.mecab = Mecab()
 
         # koBERT
-        self.labelencoder = joblib.load('save/labelencoder.pkl')
+        self.labelencoder = joblib.load('saves/labelencoder.pkl')
         self.kobert_tokenizer = get_tokenizer()
 
-        self.checkpoint = torch.load('save/kobert-emotion-text-classification.pth', map_location=device)
+        self.checkpoint = torch.load('saves/kobert-emotion-text-classification.pth', map_location=device)
         self.classifier = KoBERTforSequenceClassification()
-        self.classifier.load_state_dict(checkpoint['model_state_dict'])
+        self.classifier.load_state_dict(self.checkpoint['model_state_dict'])
         self.classifier.eval()
 
         # koGPT2
@@ -36,6 +39,7 @@ class model_loader():
 
     def tokenize_msg(msg):
         return self.mecab.morphs(msg)
+        pass
 
     def classify_msg(msg):
         data = kobert_input(self.kobert_tokenizer, msg, device, 512)

@@ -20,10 +20,9 @@ class model_loader():
         #self.spacing = Spacing()
         
         # Mecab
-        self.mecab = Mecab()
+        self.mecab = Mecab(dicpath=r"C:\mecab\mecab-ko-dic")
 
         # koBERT
-        #self.classifier = joblib.load('saves/kobert_model.pkl')
         self.labelencoder = joblib.load('saves/labelencoder.pkl')
         self.kobert_tokenizer = get_tokenizer()
 
@@ -41,9 +40,11 @@ class model_loader():
         #return self.spacing(msg)
         pass
 
+    # 단어 추출
     def tokenize_msg(self, msg):
         return self.mecab.morphs(msg)
 
+    # 감정 분류
     def classify_msg(self, msg):
         data = kobert_input(self.kobert_tokenizer, msg, self.device, 512)
         output = self.classifier(**data)
@@ -55,9 +56,11 @@ class model_loader():
         max_index = torch.argmax(softmax_logit).item()
         # max_index_value = softmax_logit[torch.argmax(softmax_logit)].item()
 
-        category = labelencoder.inverse_transform([max_index])
-        return category
+        category = self.labelencoder.inverse_transform([max_index])
+        category.tobytes()
+        return category[0]
 
+    # 답변 생성
     def reply_to_msg(self, msg):
         pass
 

@@ -6,7 +6,7 @@ from model_loader import model_loader
 
 app = Flask(__name__)
 
-#app.debug = True
+app.config['JSON_AS_ASCII'] = False
 
 counsellor = model_loader()
 
@@ -16,13 +16,17 @@ def counsel():
 
     message = request.get_json()
     #message = counsellor.split_msg(message)
-    print(message)
 
-    emotion = counsellor.classify_msg(message)
-    words = counsellor.tokenize_msg(message)
+    emotion = counsellor.classify_msg(message)  # 감정 분류 결과
+    words = counsellor.tokenize_msg(message)    # 단어 추출 결과
 
-    return emotion, words
+    response = jsonify(
+        emotion,
+        words,
+    )
+
+    return response
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)

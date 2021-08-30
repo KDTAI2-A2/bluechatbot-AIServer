@@ -1,5 +1,4 @@
 from flask import Flask, json, request, jsonify, abort
-import requests
 import time
 import os
 
@@ -7,7 +6,7 @@ from model_loader import model_loader
 
 app = Flask(__name__)
 
-app.debug = True
+#app.debug = True
 
 counsellor = model_loader()
 
@@ -15,14 +14,14 @@ counsellor = model_loader()
 def counsel():
     global counsellor
 
-    body = request.get_json()
-    message = body['message']
-    message = counsellor.split_msg(message)
+    message = request.get_json()
+    #message = counsellor.split_msg(message)
+    print(message)
 
     emotion = counsellor.classify_msg(message)
-    #words = counsellor.tokenize_msg(message)
+    words = counsellor.tokenize_msg(message)
 
-    return emotion
+    return emotion, words
 
 
 if __name__ == '__main__':

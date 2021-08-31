@@ -9,6 +9,8 @@ import torch.nn as nn
 from model.kobert import KoBERTforSequenceClassification, kobert_input
 from kobert_transformers import get_tokenizer
 
+import model.kogpt2 as kogpt2
+
 import joblib
 
 
@@ -26,14 +28,15 @@ class model_loader():
         self.labelencoder = joblib.load('saves/labelencoder.pkl')
         self.kobert_tokenizer = get_tokenizer()
 
-        self.checkpoint = torch.load('saves/kobert_model.pth', map_location=self.device)
+        checkpoint = torch.load('saves/kobert_model.pth', map_location=self.device)
         self.classifier = KoBERTforSequenceClassification()
-        self.classifier.load_state_dict(self.checkpoint['model_state_dict'], strict=False)
+        self.classifier.load_state_dict(checkpoint['model_state_dict'], strict=False)
         
         self.classifier.to(self.device)
         self.classifier.eval()
 
         # koGPT2
+        self.generator = kogpt2.KoGPT2Chat.load_from_checkpoint('saves/kogpt2_model.ckpt')
 
 
     def split_msg(self, msg):
@@ -57,12 +60,12 @@ class model_loader():
         # max_index_value = softmax_logit[torch.argmax(softmax_logit)].item()
 
         category = self.labelencoder.inverse_transform([max_index])
-        category.tobytes()
-        return category[0]
+        return f"{category[0]}"
 
     # 답변 생성
-    def reply_to_msg(self, msg):
-        pass
+    def generate_reply(self, msg):
+        reply = self.generator.chat(msg=msg)
+        return reply
 
     
 

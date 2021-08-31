@@ -19,10 +19,12 @@ def counsel():
 
     emotion = counsellor.classify_msg(message)  # 감정 분류 결과
     words = counsellor.tokenize_msg(message)    # 단어 추출 결과
+    reply = counsellor.generate_reply(message)
 
     response = jsonify(
         emotion,
         words,
+        reply
     )
 
     return response

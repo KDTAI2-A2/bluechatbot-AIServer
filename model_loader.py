@@ -1,17 +1,12 @@
 #from pykospacing import Spacing
 #from hanspell import spell_checker
 
-from konlpy.tag import Mecab
-
 import torch
-import torch.nn as nn
-
-from model.kobert import KoBERTforSequenceClassification, kobert_input
-from kobert_transformers import get_tokenizer
-
-import model.kogpt2 as kogpt2
-
 import joblib
+
+from konlpy.tag import Mecab
+from model.kobert import KoBERTClassifier
+from model.kogpt2 import KoGPT2Replier
 
 
 class model_loader():
@@ -25,19 +20,18 @@ class model_loader():
         self.mecab = Mecab(dicpath=r"C:\mecab\mecab-ko-dic")
 
         # koBERT
-        self.labelencoder = joblib.load('saves/labelencoder.pkl')
-        self.kobert_tokenizer = get_tokenizer()
+        self.label_encoder = joblib.load('saves/labelencoder.pkl')
 
         checkpoint = torch.load('saves/kobert_model.pth', map_location=self.device)
-        self.classifier = KoBERTforSequenceClassification()
-        self.classifier.load_state_dict(checkpoint['model_state_dict'], strict=False)
-        
-        self.classifier.to(self.device)
+        self.classifier = KoBERTClassifier()
+        self.classifier.load_state_dict(checkpoint, strict=False)
         self.classifier.eval()
 
         # koGPT2
-        self.generator = kogpt2.KoGPT2Chat.load_from_checkpoint('saves/kogpt2_model.ckpt')
-
+        checkpoint = torch.load("saves/kogpt2_model.pth", map_location=self.device)
+        self.generator = KoGPT2Replier()
+        self.generator.load_state_dict(checkpoint, strict=False)
+        self.generator.eval()
 
     def split_msg(self, msg):
         #return self.spacing(msg)
@@ -49,22 +43,12 @@ class model_loader():
 
     # 감정 분류
     def classify_msg(self, msg):
-        data = kobert_input(self.kobert_tokenizer, msg, self.device, 512)
-        output = self.classifier(**data)
-
-        logit = output[0]
-        softmax_logit = torch.softmax(logit,dim=-1)
-        softmax_logit = softmax_logit.squeeze()
-
-        max_index = torch.argmax(softmax_logit).item()
-        # max_index_value = softmax_logit[torch.argmax(softmax_logit)].item()
-
-        category = self.labelencoder.inverse_transform([max_index])
-        return f"{category[0]}"
+        category = self.classifier.classify(msg=msg, label_encoder=self.label_encoder)
+        return category
 
     # 답변 생성
     def generate_reply(self, msg):
-        reply = self.generator.chat(msg=msg)
+        reply = self.generator.reply(msg=msg)
         return reply
 
     

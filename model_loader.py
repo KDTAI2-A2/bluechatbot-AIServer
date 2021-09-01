@@ -1,5 +1,4 @@
-#from pykospacing import Spacing
-#from hanspell import spell_checker
+from pykospacing import Spacing
 
 import torch
 import joblib
@@ -14,7 +13,8 @@ class model_loader():
         ctx = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = torch.device(ctx)
 
-        #self.spacing = Spacing()
+        # Spacing
+        self.spacing = Spacing()
         
         # Mecab
         self.mecab = Mecab(dicpath=r"C:\mecab\mecab-ko-dic")
@@ -33,13 +33,14 @@ class model_loader():
         self.generator.load_state_dict(checkpoint, strict=False)
         self.generator.eval()
 
+    # 문장 띄어쓰기 적용
     def split_msg(self, msg):
-        #return self.spacing(msg)
-        pass
+        return self.spacing(msg)
 
     # 단어 추출
     def tokenize_msg(self, msg):
-        return self.mecab.morphs(msg)
+        keywords = [word for word, tag in self.mecab.pos(msg) if tag in ('NNG', 'NNP', 'VV', 'VA')]
+        return keywords
 
     # 감정 분류
     def classify_msg(self, msg):
